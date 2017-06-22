@@ -1,0 +1,19 @@
+{
+  "name": "trails-api",
+  "version": "1.0.0",
+  "description": "API for accessing forest service trail information",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kellycrowther/Trails-API.git"
+  },
+  "author": "Kelly Crowther",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kellycrowther/Trails-API/issues"
+  },
+  "homepage": "https://github.com/kellycrowther/Trails-API#readme"
+}
