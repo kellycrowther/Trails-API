@@ -4,6 +4,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var Quote = require("./entities/quote");
 var Users = require("./entities/users");
+var Trails = require("./trail-model/trails");
 var mongoose = require("mongoose");
 var restful = require('node-restful');
 // ***** COMMON VARIABLES *****
@@ -23,6 +24,9 @@ var quoteApi = restful.model("quote", Quote.schema)
 var usersApi = restful.model("users", Users.schema)
     .methods(["get", "post", "put", "delete"])
     .register(app, "/api/users");
+var trailsApi = restful.model("trails", Trails.schema)
+    .methods(["get", "post", "put", "delete"])
+    .register(app, "/api/deschutes-trails");
 // ***** DB *****
 mongoose.connect(connectionString);
 // ***** SERVER *****

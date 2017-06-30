@@ -2,6 +2,7 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as Quote from "./entities/quote";
 import * as Users from "./entities/users";
+import * as Trails from "./trail-model/trails";
 import * as mongoose from "mongoose";
 
 var restful = require('node-restful');
@@ -28,6 +29,10 @@ var quoteApi = restful.model("quote", Quote.schema)
 var usersApi = restful.model("users", Users.schema)
   .methods(["get", "post", "put", "delete"])
   .register(app, "/api/users");
+
+var trailsApi = restful.model("trails", Trails.schema)
+  .methods(["get", "post", "put", "delete"])
+  .register(app, "/api/deschutes-trails");
 
 // ***** DB *****
 mongoose.connect(connectionString);

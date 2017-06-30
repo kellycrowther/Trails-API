@@ -1,9 +1,15 @@
+"use strict";
+
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
 var linkscrape = require('linkscrape');
+var Promise = require('promise');
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://heroku_vsr9srk5:ndq03g7mtfsfo8hlnnfjsvfb1j@ds135382.mlab.com:35382/heroku_vsr9srk5";
 
 var arrayTrailUrls = [];
+var fullTrailDetails = [];
 
 //*******ideas for improvement****************
 //-include absolute path/href for each trail so user can click on the trail
@@ -38,6 +44,25 @@ var arrayTrailUrls = [];
 //     fs.appendFileSync('trailInfo.txt', trailInfo + '\n');
 //   };
 // });
+function addToDB(trailInfo) {
+  MongoClient.connect(url, function(err, db) {
+    if(err){
+      console.log("Error Connecting to Database: ", err);
+    } else {
+      console.log("Connected to Database");
+
+      db.collection("trails").insert(trailInfo, function(err, data) {
+        if(err) {
+          console.log("Error Inserting Data: ", err);
+          throw(err);
+        }
+        else {
+          console.log("Successfully inserted data: ", data);
+        }
+      })
+    }
+  })
+}
 
 
 // requesting each page and scraping details from each page
@@ -45,6 +70,7 @@ function trailDetails(arrayTrailUrls) {
   arrayTrailUrls.forEach(function(trailsUrls) {
     request(trailsUrls, scrapeTrailInfo);
   });
+
 };
 
 // scraper for each separate trail
@@ -53,7 +79,7 @@ function scrapeTrailInfo(error, response, body) {
     var $ = cheerio.load(body);
     var trailInfo = [];
     var tableArray = [];
-    var trailObject = {
+    var trailData = {
       description: "",
       directions: "",
       elevation: "",
@@ -69,7 +95,7 @@ function scrapeTrailInfo(error, response, body) {
       var div = $(this).find('h1');
       var trailName = $(this).text().trim();
       // trailInfo.push(trailName);
-      trailObject.trailName = trailName;
+      trailData.trailName = trailName;
       // console.log("Trail Name: ", trailName);
     });
 
@@ -82,8 +108,9 @@ function scrapeTrailInfo(error, response, body) {
       }).next().text().trim();
 
         if(length.length > 0 ) {
+          length = parseFloat(length);
           // console.log("Length: ", length);
-          trailObject.length = length;
+          trailData.length = length;
         }
 
       var latitude = $(this).filter((data) =>{
@@ -92,8 +119,10 @@ function scrapeTrailInfo(error, response, body) {
       // console.log("Latitude Length: ", latitude.length);
 
       if(latitude.length > 3){
-        // console.log("Latitude: ", latitude);
-        trailObject.latitude = latitude;
+        latitude = parseFloat(latitude);
+        // console.log(latitude);
+        // console.log("Latitude: ", typeof latitude);
+        trailData.latitude = latitude;
       }
 
 
@@ -101,8 +130,10 @@ function scrapeTrailInfo(error, response, body) {
         return $(this).text().trim() === 'Longitude :';
       }).next().text().trim();
       if(longitude.length > 0){
-        // console.log("Longitude: ", longitude);
-        trailObject.longitude = longitude;
+        longitude = parseFloat(longitude);
+        // console.log(longitude);
+        // console.log("Longitude: ", typeof longitude);
+        trailData.longitude = longitude;
       }
 
 
@@ -111,8 +142,9 @@ function scrapeTrailInfo(error, response, body) {
       }).next().text().trim();
 
       if(elevation.length > 0){
+        elevation = parseFloat(elevation);
         // console.log("Elevation: ", elevation);
-        trailObject.elevation = elevation;
+        trailData.elevation = elevation;
       }
 
     });
@@ -121,11 +153,11 @@ function scrapeTrailInfo(error, response, body) {
 
       var heading = $(this).text().trim();
 
-      if(heading === 'Directions:'){
-        directions = $(this).next().text().trim();
+      if((heading === 'Directions:') && ($(this).next() != undefined)){
+        var directions = $(this).next().text().trim();
 
         // console.log("Directions: ", directions);
-        trailObject.directions = directions;
+        trailData.directions = directions;
       }
 
     })
@@ -136,31 +168,47 @@ function scrapeTrailInfo(error, response, body) {
 
       // console.log("Description: ", description);
 
-      trailObject.description = description;
+      trailData.description = description;
 
     });
 
     $('#centercol th').each(function(i, element) {
-      tableHeading = $(this).text().trim();
-      tableDetails = $(this).next().text().trim();
+      if($(this).text().trim() != undefined){
+        var tableHeading = $(this).text().trim();
+      }
+      if($(this).next().text().trim() != undefined) {
+        var tableDetails = $(this).next().text().trim();
+      }
+
 
       // console.log("Table Details: ", tableHeading + " " + tableDetails);
       // console.log("Table Details: ", details);
 
-      tableObj = {
+      var tableObj = {
         tableHeading: tableHeading,
         tableDetails: tableDetails
       };
 
-      trailObject.tableInfo = tableArray.push(tableObj);
-      // console.log("Table Array: ", tableArray);
+      trailData.tableInfo.push(tableObj);
+      // console.log("Table Info: ", trailData.tableInfo);
     })
 
-    // trailInfo.push(trailObject);
+    // console.log("Trail Data Object: ", trailData);
+
+    //insert trail info into database
+    if(trailData.trailName.length > 0) {
+      addToDB(trailData);
+    }
+
+    // return trailInfo.push(trailData);
     // trailInfo.push(trailName,trailDetails);
     // console.log(trailInfo);
+
+    //append to text file
     // fs.appendFileSync('trailInfo.txt', trailInfo + '\n');
-    console.log("Trail Object: ", trailObject);
+
+    // fullTrailDetails.push(trailData)
+    // console.log(fullTrailDetails);
   };
 };
 
