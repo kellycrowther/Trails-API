@@ -6,10 +6,42 @@ var fs = require('fs');
 var linkscrape = require('linkscrape');
 var Promise = require('promise');
 var MongoClient = require('mongodb').MongoClient;
+var Mongoose = require("mongoose");
 var url = "mongodb://heroku_vsr9srk5:ndq03g7mtfsfo8hlnnfjsvfb1j@ds135382.mlab.com:35382/heroku_vsr9srk5";
 
 var arrayTrailUrls = [];
 var fullTrailDetails = [];
+// var listingLinksAllRegions = [];
+
+var oregonRegions = [
+  'wallowa-whitman',
+  'crgnsa',
+  'ochoco',
+  'fremont-winema',
+  'klamath',
+  'malheur',
+  'mthood',
+  'ochoco',
+  'rogue-siskiyou',
+  'siuslaw',
+  'umpqua',
+  'umatilla',
+  'deschutes',
+  'willamete'
+];
+
+var recreationMode = [
+  'climbing',
+  'camping-cabins',
+  'bicycling',
+  'fishing',
+  'hiking',
+  'horseriding-camping',
+  'hunting',
+  'ohv',
+  'wateractivities',
+  'wintersports'
+];
 
 //*******ideas for improvement****************
 //-include absolute path/href for each trail so user can click on the trail
@@ -44,28 +76,93 @@ var fullTrailDetails = [];
 //     fs.appendFileSync('trailInfo.txt', trailInfo + '\n');
 //   };
 // });
-function addToDB(trailInfo) {
-  MongoClient.connect(url, function(err, db) {
-    if(err){
-      console.log("Error Connecting to Database: ", err);
-    } else {
-      console.log("Connected to Database");
 
-      db.collection("trails").insert(trailInfo, function(err, data) {
-        if(err) {
-          console.log("Error Inserting Data: ", err);
-          throw(err);
-        }
-        else {
-          console.log("Successfully inserted data: ", data);
-        }
-      })
-    }
-  })
+//data base LOGIC
+
+Mongoose.connect(url);
+var db = Mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error'));
+db.once('open', function callback() {
+  console.log("Connection with database succeeded.");
+});
+//
+// function addToDB(trailInfo) {
+//   console.log("Trail Info: ", trailInfo);
+//   db.collection("oregon").update(
+//     {
+//       region: trailInfo.region
+//     },{$push:
+//       {
+//         trailInfo
+//       }
+//     },
+//     {
+//       upsert: true
+//     },
+//   )
+//   console.log("Added to DB");
+// }
+
+function addToDB(trailInfo) {
+    console.log("Added to DB");
+    db.collection("oregon").insert(trailInfo);
 }
 
 
-// requesting each page and scraping details from each page
+// let test = {
+//   "deschutes": [
+//     {
+//       "hike": [
+//         {
+//           "description": "hike",
+//           "name": "hike"
+//         }
+//       ]
+//     }
+//   ]
+// }
+//
+// var doc =   {
+//     name: [
+//       "Jan",
+//       "Kelly"
+//     ],
+//     phone: 5415490544,
+//     email: "jan@jan.com"
+//   };
+//
+// function addDoc() {
+//   db.collection("oregon").update(
+//     {
+//       region: wallowa.hiking
+//     },{$push:
+//       {
+//         "description": "hiking in the great outdoors",
+//         "name": "meadow camp"
+//       }
+//     },
+//     {
+//       upsert: true
+//     },
+//   )
+//   console.log("Added to DB");
+// }
+
+
+
+
+// activities: trailInfo.activities,
+// description: trailInfo.description,
+// directions: trailInfo.directions,
+// elevation: trailInfo.elevation,
+// latitude: trailInfo.latitude,
+// length: trailInfo.length,
+// longitude: trailInfo.longitude,
+// table: trailInfo.table,
+// name: trailInfo.name
+
+
+//requesting each page and scraping details from each page
 function trailDetails(arrayTrailUrls) {
   arrayTrailUrls.forEach(function(trailsUrls) {
     request(trailsUrls, scrapeTrailInfo);
@@ -80,22 +177,24 @@ function scrapeTrailInfo(error, response, body) {
     var trailInfo = [];
     var tableArray = [];
     var trailData = {
+      activities: [],
       description: "",
       directions: "",
       elevation: "",
       latitude: "",
       length: "",
       longitude: "",
-      tableInfo: [],
-      trailName: "",
+      table: [],
+      name: "",
+      region: ""
     };
 
     //getting the trail name
     $('#pagetitletop').each(function(i, element){
       var div = $(this).find('h1');
-      var trailName = $(this).text().trim();
+      var name = $(this).text().trim();
       // trailInfo.push(trailName);
-      trailData.trailName = trailName;
+      trailData.name = name;
       // console.log("Trail Name: ", trailName);
     });
 
@@ -179,24 +278,36 @@ function scrapeTrailInfo(error, response, body) {
       if($(this).next().text().trim() != undefined) {
         var tableDetails = $(this).next().text().trim();
       }
-
-
       // console.log("Table Details: ", tableHeading + " " + tableDetails);
       // console.log("Table Details: ", details);
-
       var tableObj = {
         tableHeading: tableHeading,
         tableDetails: tableDetails
       };
+      trailData.table.push(tableObj);
+      // console.log("Table Info: ", trailData.table);
+    });
 
-      trailData.tableInfo.push(tableObj);
-      // console.log("Table Info: ", trailData.tableInfo);
-    })
+    //get activities
+    $('#centercol .themetd h4').each(function(i, element) {
+      if($(this).text().trim() != undefined) {
+        var activity = $(this).text().trim();
+        console.log("Activity: ", activity);
+      }
+      trailData.activities.push(activity);
+      console.log("Activities Array: ", trailData.activities);
+    });
 
-    // console.log("Trail Data Object: ", trailData);
+    //get region
+    var region = $('#leftcol .themetable .navleft .heading').first().text().trim();
+    trailData.region = region;
+    console.log("Region: ", trailData.region);
+
+
+    console.log("Trail Data Object: ", trailData);
 
     //insert trail info into database
-    if(trailData.trailName.length > 0) {
+    if(trailData.name.length > 0) {
       addToDB(trailData);
     }
 
@@ -226,29 +337,74 @@ function getURLs(metadataObjects) {
     trailDetails(arrayTrailUrls);
 };
 
-
 //scraping the table of content URls to be requested
 
-request('http://www.fs.usda.gov/activity/deschutes/recreation/hiking/?recid=38280&actid=50', function (error, response, html) {
-    if (!error && response.statusCode == 200) {
-      var $ = cheerio.load(html);
-      var metadataObjects = [];
-      $('#centercol .themetable ul li').each(function(i, element){
-        var a = $(this).find('a');
-        var title = a.text();
-        var url = a.attr('href');
-        // Our parsed meta data object
-        var metadata = {
-          title: title,
-          url: url
+function detailLinks(listingLinksAllRegions){
+  console.log("Detail Link Started");
+  console.log("Detail Links Array: ", listingLinksAllRegions);
+  listingLinksAllRegions.forEach((listingLink) => {
+    console.log("Detail Link: ", listingLink);
+    request('http://www.fs.usda.gov/' + listingLink, function (error, response, html) {
+        if (!error && response.statusCode == 200) {
+          var $ = cheerio.load(html);
+          var metadataObjects = [];
+
+          $('#centercol .themetable ul li a').each(function(i, element){
+            if($(this).attr('style') != undefined) {
+              var category = $(this).text();
+              console.log("Category: ", category);
+            };
+          });
+
+          $('#centercol .themetable ul li').each(function(i, element){
+            var a = $(this).find('a');
+            var title = a.text();
+            var url = a.attr('href');
+            // Our parsed meta data object
+            var metadata = {
+              title: title,
+              url: url
+            };
+            metadataObjects.push(metadata);
+            // relativePathUrls.push(url);
+            // console.log(metadata);
+            // fs.appendFileSync('links.txt', url)
+          });
+          getURLs(metadataObjects);
         };
-        metadataObjects.push(metadata);
-        // relativePathUrls.push(url);
-        // console.log(metadata);
-        // fs.appendFileSync('links.txt', url)
+        // console.log(relativePathUrls);
+        return true;
       });
-      getURLs(metadataObjects);
-    };
-    // console.log(relativePathUrls);
-    return true;
-  });
+  })
+}
+
+
+
+  // /recmain/deschutes/recreation
+  function oregonAreas() {
+    var listingLinksAllRegions = [];
+    for(let x = 0; x<oregonRegions.length; x++) {
+      console.log(oregonRegions[x]);
+      for(let y = 0; y<recreationMode.length; y++) {
+        console.log(recreationMode[y]);
+        request('http://www.fs.usda.gov/activity/' + oregonRegions[x] + '/recreation/' + recreationMode[y], function(error, response, html) {
+          if(!error && response.statusCode == 200) {
+            var $ = cheerio.load(html);
+            $('#centercol .themetable ul li a').each(function(i, element) {
+              var link = $(this).attr('href');
+              // console.log(link);
+              if(link.includes('/activity/')){
+                console.log("Oregon Areas: ", link)
+                listingLinksAllRegions.push(link);
+              }
+            })
+            detailLinks(listingLinksAllRegions);
+            }
+          })
+        }
+      }
+      return true;
+      // detailLinks(listingLinksAllRegions);
+    }
+
+  oregonAreas();

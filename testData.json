@@ -1,0 +1,38 @@
+
+  {
+    "deschutes": [
+      {
+        "hiking": [
+          {
+          "description": "test",
+          "trailName": "Name",
+          },
+        ],
+        "fishing": [
+          {
+          "description": "test",
+          "trailName": "Name",
+          },
+        ],
+        "swimming": [
+          {
+            "description": "test",
+            "trailName": "Name",
+          },
+          {
+            "description": "test",
+            "trailName": "Name",
+          },
+          {
+            "description": "test",
+            "trailName": "Name",
+          },
+        ],
+      },
+    ],
+    "columbia": [
+      {
+
+      }
+    ]
+  }

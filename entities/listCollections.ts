@@ -11,7 +11,11 @@ MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       console.dir(collections);
 
-      showTrails(db, () =>{
+      // showTrails(db, () =>{
+      //   db.close();
+      // });
+
+      showOregon(db, () =>{
         db.close();
       });
     });
@@ -44,6 +48,18 @@ MongoClient.connect(url, function(err, db) {
 
 var showTrails = (db, callback) => {
   var cursor = db.collection('trails').find({});
+  cursor.each((err, doc) => {
+    assert.equal(err, null);
+    if (doc !=null) {
+      console.dir(doc);
+    } else {
+      callback();
+    }
+  });
+};
+
+var showOregon = (db, callback) => {
+  var cursor = db.collection('oregon').find({});
   cursor.each((err, doc) => {
     assert.equal(err, null);
     if (doc !=null) {
