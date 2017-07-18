@@ -4,6 +4,7 @@ import * as Quote from "./entities/quote";
 import * as Users from "./entities/users";
 import * as Trails from "./trail-model/trails";
 import * as Oregon from "./oregon-model/oregon";
+import * as Idaho from "./idaho/idaho";
 import * as mongoose from "mongoose";
 
 var restful = require('node-restful');
@@ -35,9 +36,15 @@ var trailsApi = restful.model("trails", Trails.schema)
   .methods(["get", "post", "put", "delete"])
   .register(app, "/api/deschutes-trails");
 
-var trailsApi = restful.model("oregon", Oregon.schema)
-  .methods(["get", "post", "put", "delete"])
-  .register(app, "/api/oregon");
+var trailsApi = restful.model("test", Trails.schema)
+    .methods(["get", "post", "put", "delete"])
+    .register(app, "/api/test");
+
+var oregonApi = restful.model("oregon", Oregon.schema)
+    .methods(["get", "post", "put", "delete"])
+    .register(app, "/api/oregon");
+
+
 
 // ***** DB *****
 mongoose.connect(connectionString);

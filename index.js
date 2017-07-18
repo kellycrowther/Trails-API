@@ -28,7 +28,10 @@ var usersApi = restful.model("users", Users.schema)
 var trailsApi = restful.model("trails", Trails.schema)
     .methods(["get", "post", "put", "delete"])
     .register(app, "/api/deschutes-trails");
-var trailsApi = restful.model("oregon", Oregon.schema)
+var trailsApi = restful.model("test", Trails.schema)
+    .methods(["get", "post", "put", "delete"])
+    .register(app, "/api/test");
+var oregonApi = restful.model("oregon", Oregon.schema)
     .methods(["get", "post", "put", "delete"])
     .register(app, "/api/oregon");
 // ***** DB *****

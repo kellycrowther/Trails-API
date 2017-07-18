@@ -85,28 +85,48 @@ db.on('error', console.error.bind(console, 'connection error'));
 db.once('open', function callback() {
   console.log("Connection with database succeeded.");
 });
-//
-// function addToDB(trailInfo) {
-//   console.log("Trail Info: ", trailInfo);
-//   db.collection("oregon").update(
-//     {
-//       region: trailInfo.region
-//     },{$push:
-//       {
-//         trailInfo
-//       }
-//     },
-//     {
-//       upsert: true
-//     },
-//   )
-//   console.log("Added to DB");
-// }
 
 function addToDB(trailInfo) {
-    console.log("Added to DB");
-    db.collection("oregon").insert(trailInfo);
+  console.log("Trail Info: ", trailInfo);
+  db.collection("oregons").update(
+    {
+      region: trailInfo.region
+    },{$push:
+      {
+        trailInfo
+      }
+    },
+    {
+      upsert: true
+    },
+  )
+  console.log("Added to DB");
 }
+
+// function addToDB(trailInfo) {
+//     console.log("Added to DB");
+//     // db.collection("oregon").insert(trailInfo);
+//     db.collection("oregons").insert(
+//       {
+//         "name": "Oregon Test",
+//         "description": "Oregon Test"
+//       }
+//     )
+// }
+//
+// addToDB();
+//
+// function test(){
+//   db.collection("oregons").insert(
+//     {
+//       "name": "Oregon Test",
+//       "description": "Oregon Test"
+//     }
+//   );
+//   console.log("Added to DB");
+// }
+//
+// test();
 
 
 // let test = {
